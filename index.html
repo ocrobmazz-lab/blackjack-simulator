@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blackjack Simulator</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#111a24;color:#ddd;font-family:'Segoe UI',sans-serif;min-height:100vh}
+.wrap{max-width:1500px;margin:0 auto;padding:16px}
+h1{text-align:center;color:#f0c060;font-size:1.7em;letter-spacing:3px;margin-bottom:16px}
+.layout{display:grid;grid-template-columns:300px 1fr;gap:16px}
+.panel{background:#1c2a3a;border-radius:10px;padding:16px}
+.sec{color:#f0c060;font-size:.78em;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid #2a3f55;padding-bottom:6px;margin:14px 0 10px}
+.sec:first-child{margin-top:0}
+.row{margin-bottom:10px}
+label{display:block;font-size:.75em;color:#88a;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+input[type=number]{width:100%;background:#111a24;border:1px solid #2a3f55;color:#ddd;padding:7px 10px;border-radius:6px;font-size:.95em}
+input[type=number]:focus{outline:none;border-color:#f0c060}
+input[type=range]{width:100%;accent-color:#f0c060;cursor:pointer;margin-top:2px}
+.bet-grid{display:grid;grid-template-columns:70px 1fr;gap:6px 10px;align-items:center}
+.bet-grid label{font-size:.78em;color:#88a;text-transform:none;letter-spacing:0;margin:0}
+.bet-grid input{padding:5px 8px;font-size:.88em}
+.btn{width:100%;padding:10px;border:none;border-radius:7px;font-size:.95em;font-weight:700;cursor:pointer;letter-spacing:1px;margin-top:6px;transition:.15s}
+.btn-go{background:#f0c060;color:#111a24}
+.btn-go:hover{background:#f5d070}
+.btn-go:disabled{opacity:.4;cursor:default}
+.btn-stop{background:#e53935;color:#fff}
+.btn-stop:hover{background:#ef5350}
+.btn-stop:disabled{opacity:.4;cursor:default}
+.prog-wrap{margin-top:12px;background:#111a24;border-radius:4px;height:5px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#f0c060,#f5e090);border-radius:4px;width:0%;transition:width .2s}
+.prog-txt{text-align:center;font-size:.73em;color:#557;margin-top:4px}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+.stat{background:#111a24;border-radius:8px;padding:10px;text-align:center}
+.stat .lbl{font-size:.68em;color:#557;text-transform:uppercase;letter-spacing:.8px}
+.stat .val{font-size:1.25em;font-weight:700;margin-top:3px}
+.pos{color:#4caf50}.neg{color:#f44336}.neu{color:#f0c060}
+.chart-box{position:relative;height:360px}
+/* Audit panel */
+.audit-panel{margin-top:14px;background:#111a24;border-radius:8px;padding:12px}
+.audit-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.audit-stat{background:#1c2a3a;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center}
+.audit-stat .al{font-size:.72em;color:#88a;text-transform:uppercase;letter-spacing:.7px}
+.audit-stat .av{font-size:.9em;font-weight:700}
+.audit-log{background:#0d1520;border-radius:6px;padding:8px;height:110px;overflow-y:auto;font-size:.7em;font-family:monospace;color:#88a}
+.audit-log .ok{color:#4caf50}
+.audit-log .err{color:#f44336}
+.audit-log .warn{color:#f0c060}
+.audit-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.audit-hdr span{font-size:.75em;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#f0c060}
+.audit-hdr button{background:none;border:1px solid #2a3f55;color:#88a;padding:2px 8px;border-radius:4px;font-size:.68em;cursor:pointer}
+.audit-hdr button:hover{border-color:#f0c060;color:#f0c060}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>♠ BLACKJACK SIMULATOR ♠</h1>
+  <div class="layout">
+
+    <!-- Controls -->
+    <div class="panel">
+      <div class="sec">Simulation</div>
+      <div class="row"><label>Number of Hands</label><input type="number" id="numHands" value="10000" min="100" max="2000000" step="100"></div>
+      <div class="row"><label>Bankroll ($)</label><input type="number" id="bankroll" value="10000" min="100" step="100"></div>
+      <div class="row"><label>Base Bet ($)</label><input type="number" id="baseBet" value="10" min="1" step="1"></div>
+      <div class="row">
+        <label>Speed — <span id="speedLbl">100 hands/sec</span></label>
+        <input type="range" id="speedSlider" min="0" max="10" value="5" oninput="updateSpeedLabel()">
+      </div>
+
+      <div class="sec">Bet Multiplier by True Count</div>
+      <div style="font-size:.72em;color:#557;margin-bottom:8px">Set to 0 to sit out at that count</div>
+      <div class="bet-grid">
+        <label>TC ≤ 0 ×</label><input type="number" id="m0" value="0"  min="0" max="50" step="0.5">
+        <label>TC = 1 ×</label><input type="number" id="m1" value="1"  min="0" max="50" step="0.5">
+        <label>TC = 2 ×</label><input type="number" id="m2" value="2"  min="0" max="50" step="0.5">
+        <label>TC = 3 ×</label><input type="number" id="m3" value="4"  min="0" max="50" step="0.5">
+        <label>TC = 4 ×</label><input type="number" id="m4" value="6"  min="0" max="50" step="0.5">
+        <label>TC ≥ 5 ×</label><input type="number" id="m5" value="8"  min="0" max="50" step="0.5">
+      </div>
+
+      <button class="btn btn-go"   id="btnStart" onclick="startSim()">▶ START</button>
+      <button class="btn btn-stop" id="btnStop"  onclick="stopSim()" disabled>■ STOP</button>
+
+      <div class="prog-wrap"><div class="prog-fill" id="progFill"></div></div>
+      <div class="prog-txt" id="progTxt">Ready</div>
+    </div>
+
+    <!-- Chart + Audit -->
+    <div class="panel">
+      <div class="stats">
+        <div class="stat"><div class="lbl">Bankroll</div><div class="val neu" id="sBankroll">—</div></div>
+        <div class="stat"><div class="lbl">Net P/L</div><div class="val neu" id="sPL">—</div></div>
+        <div class="stat"><div class="lbl">ROI</div><div class="val neu" id="sROI">—</div></div>
+        <div class="stat"><div class="lbl">True Count</div><div class="val neu" id="sTC">—</div></div>
+        <div class="stat"><div class="lbl">Hands Played</div><div class="val neu" id="sHands">0</div></div>
+      </div>
+      <div class="chart-box"><canvas id="chart"></canvas></div>
+
+      <!-- AUDIT PANEL -->
+      <div class="audit-panel">
+        <div class="audit-row">
+          <div class="audit-stat">
+            <span class="al">Strategy Checks</span>
+            <span class="av pos" id="aStratChecks">0</span>
+          </div>
+          <div class="audit-stat">
+            <span class="al">Strategy Deviations</span>
+            <span class="av pos" id="aStratDevs">0</span>
+          </div>
+          <div class="audit-stat">
+            <span class="al">Chip Hands Verified</span>
+            <span class="av pos" id="aChipChecks">0</span>
+          </div>
+          <div class="audit-stat">
+            <span class="al">Chip Errors</span>
+            <span class="av pos" id="aChipErrors">0</span>
+          </div>
+        </div>
+        <div class="audit-hdr">
+          <span>Audit Log</span>
+          <button onclick="clearAuditLog()">Clear</button>
+        </div>
+        <div class="audit-log" id="auditLog">
+          <span class="ok">Auditors ready. Start simulation to begin verification.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── SPEED STEPS ───────────────────────────────────────────────────────────
+const SPEEDS = [1, 2, 5, 10, 25, 50, 100, 500, 1000, 5000, Infinity];
+function updateSpeedLabel() {
+  const v = SPEEDS[+document.getElementById('speedSlider').value];
+  document.getElementById('speedLbl').textContent = v === Infinity ? 'MAX' : v + ' hands/sec';
+}
+
+// ─── HAND HELPERS ─────────────────────────────────────────────────────────
+function handVal(cards) {
+  let s=0, aces=0;
+  for(const c of cards){ if(c===1){aces++;s+=11;}else s+=c; }
+  while(s>21&&aces>0){s-=10;aces--;}
+  return s;
+}
+function isSoft(cards) {
+  let s=0,aces=0;
+  for(const c of cards){if(c===1){aces++;s+=11;}else s+=c;}
+  while(s>21&&aces>0){s-=10;aces--;}
+  return aces>0;
+}
+function isBlackjack(cards) { return cards.length===2 && handVal(cards)===21; }
+
+// dealer upcard → index 0-9 (2,3,4,5,6,7,8,9,10,A)
+function dealerIdx(c) { return c===1?9:c>=10?8:c-2; }
+
+// card(s) display for audit log
+function cardStr(c) { return c===1?'A':c===10?'T':String(c); }
+function handStr(h) { return '['+h.map(cardStr).join('')+']'; }
+
+// ─── BASIC STRATEGY (PRIMARY IMPLEMENTATION) ──────────────────────────────
+// String tables keyed by total/card. Index = dealerIdx (0=2..9=A)
+// H=hit, S=stand, D=double(else hit), Ds=double(else stand), P=split
+const HARD_TBL = {
+   4:'HHHHHHHHHH', 5:'HHHHHHHHHH', 6:'HHHHHHHHHH', 7:'HHHHHHHHHH', 8:'HHHHHHHHHH',
+   9:'HDDDDHHHHH',10:'DDDDDDDDHH',11:'DDDDDDDDDH',
+  12:'HHSSSHHHHH',13:'SSSSSHHHHH',14:'SSSSSHHHHH',15:'SSSSSHHHHH',16:'SSSSSHHHHH',
+  17:'SSSSSSSSSS',18:'SSSSSSSSSS',19:'SSSSSSSSSS',20:'SSSSSSSSSS',21:'SSSSSSSSSS'
+};
+const SOFT_TBL = {  // key = non-ace card value (2-9)
+  2:['H','H','H','D','D','H','H','H','H','H'],
+  3:['H','H','H','D','D','H','H','H','H','H'],
+  4:['H','H','D','D','D','H','H','H','H','H'],
+  5:['H','H','D','D','D','H','H','H','H','H'],
+  6:['H','D','D','D','D','H','H','H','H','H'],
+  7:['S','Ds','Ds','Ds','Ds','S','S','H','H','H'],  // A7: Ds vs 3-6
+  8:['S','S','S','S','S','S','S','S','S','S'],
+  9:['S','S','S','S','S','S','S','S','S','S']
+};
+const PAIR_TBL = {  // key = card value (1=A, 2-10)
+   1:['P','P','P','P','P','P','P','P','P','P'],
+   2:['P','P','P','P','P','P','H','H','H','H'],
+   3:['P','P','P','P','P','P','H','H','H','H'],
+   4:['H','H','H','P','P','H','H','H','H','H'],
+   5:['D','D','D','D','D','D','D','D','H','H'],  // 55=hard 10
+   6:['P','P','P','P','P','H','H','H','H','H'],
+   7:['P','P','P','P','P','P','H','H','H','H'],
+   8:['P','P','P','P','P','P','P','P','P','P'],
+   9:['P','P','P','P','P','S','P','P','S','S'],
+  10:['S','S','S','S','S','S','S','S','S','S']
+};
+
+function getAction(cards, dealerCard, canDouble, canSplit, splitAce) {
+  if(splitAce) return 'S';
+  const di=dealerIdx(dealerCard), total=handVal(cards), soft=isSoft(cards);
+
+  if(canSplit && cards.length===2 && cards[0]===cards[1]) {
+    const pv=cards[0]===1?1:Math.min(cards[0],10);
+    const a=(PAIR_TBL[pv]||PAIR_TBL[10])[di];
+    if(a==='P') return 'P';
+  }
+  if(soft) {
+    const other=total-11;
+    if(other>=2&&other<=9){
+      const a=SOFT_TBL[other][di];
+      if(a==='D')  return canDouble?'D':'H';
+      if(a==='Ds') return canDouble?'D':'S';
+      return a;
+    }
+    if(total>=20) return 'S';
+  }
+  const t=Math.min(Math.max(total,4),21);
+  const a=(HARD_TBL[t]||'HHHHHHHHHH')[di];
+  if(a==='D') return canDouble?'D':'H';
+  return a;
+}
+
+// ─── REFERENCE STRATEGY (INDEPENDENT IMPLEMENTATION FOR AUDITING) ─────────
+// Uses explicit conditional logic — no shared tables with getAction()
+// Returns the "Ds" distinction for comparison purposes
+function refAction(cards, dealerCard, canDouble, canSplit, splitAce) {
+  if(splitAce) return 'S';
+  const di=dealerIdx(dealerCard), total=handVal(cards), soft=isSoft(cards);
+
+  // ── PAIRS ─────────────────────────────────────────────────────────────
+  if(canSplit && cards.length===2 && cards[0]===cards[1]) {
+    const pv = cards[0]===1 ? 1 : Math.min(cards[0],10);
+    if(pv===1||pv===8) return 'P';              // always split AA, 88
+    if(pv===10)        return 'S';              // never split TT
+    if(pv===9) {
+      // split vs 2-6, 8-9; stand vs 7, 10, A
+      if(di===5||di===8||di===9) return 'S';
+      return 'P';
+    }
+    if(pv===7) return di<=5 ? 'P' : 'H';       // split vs 2-7
+    if(pv===6) return di<=4 ? 'P' : 'H';       // split vs 2-6
+    if(pv===5) { /* fall to hard 10 */ }
+    if(pv===4) return (di===3||di===4) ? 'P' : 'H';  // split vs 5-6
+    if(pv===3) return di<=5 ? 'P' : 'H';       // split vs 2-7
+    if(pv===2) return di<=5 ? 'P' : 'H';       // split vs 2-7
+  }
+
+  // ── SOFT HANDS ────────────────────────────────────────────────────────
+  if(soft) {
+    const other=total-11;
+    if(other>=10||total>=21) return 'S';
+    if(other===9) return 'S';  // A9=soft 20
+    if(other===8) return 'S';  // A8=soft 19
+    if(other===7) {            // A7=soft 18
+      if(di>=1&&di<=4) return canDouble?'D':'S';  // Ds vs 3-6
+      if(di===0||di===5||di===6) return 'S';      // stand vs 2,7,8
+      return 'H';                                  // hit vs 9,10,A
+    }
+    if(other===6) return (di>=1&&di<=4)?(canDouble?'D':'H'):'H';  // D vs 3-6
+    if(other===5||other===4) return (di>=2&&di<=4)?(canDouble?'D':'H'):'H';  // D vs 4-6
+    if(other===3||other===2) return (di>=3&&di<=4)?(canDouble?'D':'H'):'H';  // D vs 5-6
+    return 'H';
+  }
+
+  // ── HARD HANDS ────────────────────────────────────────────────────────
+  if(total>=17) return 'S';
+  if(total>=13) return di<=4?'S':'H';           // 13-16: S vs 2-6
+  if(total===12) return (di>=2&&di<=4)?'S':'H'; // 12: S vs 4-6
+  if(total===11) return (canDouble&&di<=8)?'D':'H';  // D vs 2-10
+  if(total===10) return (canDouble&&di<=7)?'D':'H';  // D vs 2-9
+  if(total===9)  return (canDouble&&di>=1&&di<=4)?'D':'H'; // D vs 3-6
+  return 'H';
+}
+
+// ─── AUDIT STATE ──────────────────────────────────────────────────────────
+const audit = {
+  stratChecks:0, stratDevs:0,
+  chipChecks:0,  chipErrors:0,
+  logEntries:[], maxLog:200
+};
+
+function auditLog(cls, msg) {
+  audit.logEntries.push({cls, msg});
+  if(audit.logEntries.length>audit.maxLog) audit.logEntries.shift();
+}
+
+function flushAuditLog() {
+  const el=document.getElementById('auditLog');
+  // only update if new entries
+  el.innerHTML=audit.logEntries.map(e=>`<div class="${e.cls}">${e.msg}</div>`).join('');
+  el.scrollTop=el.scrollHeight;
+  const sd=document.getElementById('aStratDevs');
+  sd.textContent=audit.stratDevs;
+  sd.className='av '+(audit.stratDevs===0?'pos':'neg');
+  const ce=document.getElementById('aChipErrors');
+  ce.textContent=audit.chipErrors;
+  ce.className='av '+(audit.chipErrors===0?'pos':'neg');
+  document.getElementById('aStratChecks').textContent=audit.stratChecks.toLocaleString();
+  document.getElementById('aChipChecks').textContent=audit.chipChecks.toLocaleString();
+}
+
+function clearAuditLog() {
+  audit.logEntries=[];
+  document.getElementById('auditLog').innerHTML='<span class="ok">Log cleared.</span>';
+}
+
+// Check a single strategy decision
+function auditStrategyDecision(handNum, playerCards, dealerCard, canDouble, canSplit, splitAce, actualAct) {
+  const expected=refAction(playerCards, dealerCard, canDouble, canSplit, splitAce);
+  audit.stratChecks++;
+  // Normalize: both implementations may return 'D' or 'Ds' — normalise to D
+  const actN = actualAct==='Ds'?'D':actualAct;
+  const expN = expected==='Ds'?'D':expected;
+  if(actN!==expN) {
+    audit.stratDevs++;
+    const msg=`H#${handNum} STRATEGY DEV: player${handStr(playerCards)}=${handVal(playerCards)}${isSoft(playerCards)?'s':''} vs dealer ${cardStr(dealerCard)} — got ${actN}, expected ${expN}`;
+    auditLog('err', msg);
+    console.warn('[AUDIT STRATEGY]', msg);
+  }
+}
+
+// Verify chip accounting for a complete hand
+function auditChips(handNum, brBefore, brAfter, totalWagered, totalReturned, detail) {
+  audit.chipChecks++;
+  const expectedBR = brBefore - totalWagered + totalReturned;
+  const diff = Math.abs(brAfter - expectedBR);
+  if(diff > 0.001) {
+    audit.chipErrors++;
+    const msg=`H#${handNum} CHIP ERROR: br_before=$${brBefore.toFixed(2)} wagered=$${totalWagered.toFixed(2)} returned=$${totalReturned.toFixed(2)} expected_br=$${expectedBR.toFixed(2)} actual_br=$${brAfter.toFixed(2)} diff=$${diff.toFixed(4)} [${detail}]`;
+    auditLog('err', msg);
+    console.error('[AUDIT CHIPS]', msg);
+  }
+}
+
+// ─── SHOE ─────────────────────────────────────────────────────────────────
+const NUM_DECKS=6;
+let shoe=[], runCount=0;
+
+function buildShoe() {
+  shoe=[];
+  for(let d=0;d<NUM_DECKS;d++)
+    for(let s=0;s<4;s++)
+      for(let r=0;r<13;r++)
+        shoe.push(Math.min(r+1,10));  // A=1, 2-9, 10/J/Q/K=10
+  for(let i=shoe.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [shoe[i],shoe[j]]=[shoe[j],shoe[i]];
+  }
+  runCount=0;
+}
+
+function deal(){
+  if(shoe.length<52) buildShoe();
+  const c=shoe.pop();
+  if(c>=2&&c<=6) runCount++;
+  else if(c>=10||c===1) runCount--;
+  return c;
+}
+
+// ─── SIMULATION STATE ──────────────────────────────────────────────────────
+let bankroll, startBankroll, handsPlayed, targetHands, running, rafId;
+let lastFrameTime=0, handAcc=0;
+let chartLabels=[], chartVals=[], sampleEvery=1;
+let params={};
+let peakBankroll, troughBankroll;
+let auditFlushCounter=0;
+
+function getBetMult(tc) {
+  const f=Math.floor(tc);
+  if(f<=0) return params.m[0];
+  if(f===1) return params.m[1];
+  if(f===2) return params.m[2];
+  if(f===3) return params.m[3];
+  if(f===4) return params.m[4];
+  return params.m[5];
+}
+
+// ─── CORE HAND PLAY ───────────────────────────────────────────────────────
+function playOneHand() {
+  if(shoe.length < NUM_DECKS*52*0.25) buildShoe();
+
+  const decksLeft=shoe.length/52;
+  const tc=runCount/decksLeft;
+  const mult=getBetMult(tc);
+  const bet=params.baseBet*mult;
+
+  handsPlayed++;
+  if(bankroll<=0) return;
+
+  if(bet<=0) {
+    // Sit out — but the table still plays, so deal cards to keep the count moving
+    const p=[deal(),deal()], d=[deal(),deal()];
+    while(handVal(d)<17) d.push(deal());
+    return;
+  }
+
+  const actualBet=Math.min(bet, bankroll);
+
+  // ── CHIP AUDIT: track money in/out ──────────────────────────────────
+  const brBefore=bankroll;
+  let wagered=0, returned=0;
+  let chipDetail='';
+
+  // Remove initial bet
+  bankroll-=actualBet;
+  wagered+=actualBet;
+
+  const player=[deal(),deal()];
+  const dealer=[deal(),deal()];
+
+  const pBJ=isBlackjack(player), dBJ=isBlackjach(dealer);
+
+  if(pBJ&&dBJ){
+    bankroll+=actualBet; returned+=actualBet;   // push
+    auditChips(handsPlayed, brBefore, bankroll, wagered, returned, 'BJ-push');
+    return;
+  }
+  if(pBJ){
+    bankroll+=actualBet*2.5; returned+=actualBet*2.5;  // win 3:2
+    auditChips(handsPlayed, brBefore, bankroll, wagered, returned, 'BJ-win');
+    return;
+  }
+  if(dBJ){
+    auditChips(handsPlayed, brBefore, bankroll, wagered, returned, 'dealer-BJ');
+    return;  // bet already gone
+  }
+
+  // ── PLAY PLAYER HANDS ───────────────────────────────────────────────
+  const hands=[{cards:player, bet:actualBet, done:false, splitAce:false}];
+  let hi=0;
+  while(hi<hands.length){
+    const h=hands[hi];
+    let firstAct=true;
+    while(!h.done){
+      const tot=handVal(h.cards);
+      if(tot>=21){h.done=true;break;}
+      const canDbl=firstAct&&hands.length<=4&&bankroll>=h.bet;
+      const canSpl=firstAct&&hands.length<4&&h.cards.length===2
+                   &&h.cards[0]===h.cards[1]&&bankroll>=params.baseBet*mult;
+
+      const act=getAction(h.cards, dealer[0], canDbl, canSpl, h.splitAce);
+
+      // ── STRATEGY AUDIT ─────────────────────────────────────────
+      auditStrategyDecision(handsPlayed, h.cards.slice(), dealer[0], canDbl, canSpl, h.splitAce, act);
+
+      if(act==='H'){
+        h.cards.push(deal()); firstAct=false;
+      } else if(act==='S'){
+        h.done=true;
+      } else if(act==='D'){
+        const extraBet=h.bet;
+        bankroll-=extraBet; wagered+=extraBet;
+        h.bet*=2;
+        h.cards.push(deal()); h.done=true;
+        chipDetail+='D';
+      } else if(act==='P'){
+        const c1=h.cards[0], c2=h.cards[1];
+        const isAce=(c1===1);
+        h.cards=[c1,deal()]; h.splitAce=isAce; if(isAce) h.done=true;
+        const newBet=params.baseBet*mult;
+        bankroll-=newBet; wagered+=newBet;
+        hands.splice(hi+1,0,{cards:[c2,deal()],bet:newBet,done:isAce,splitAce:isAce});
+        chipDetail+='P';
+        firstAct=true;
+      }
+    }
+    hi++;
+  }
+
+  // ── DEALER PLAYS ────────────────────────────────────────────────────
+  while(handVal(dealer)<17) dealer.push(deal());
+  const dTotal=handVal(dealer), dBust=dTotal>21;
+
+  // ── RESOLUTION ──────────────────────────────────────────────────────
+  let resDesc='';
+  for(let i=0;i<hands.length;i++){
+    const h=hands[i];
+    const pTotal=handVal(h.cards);
+    if(pTotal>21){
+      resDesc+=`H${i+1}:bust($${h.bet}) `;
+      // bust — bet already gone, nothing returned
+    } else if(dBust||pTotal>dTotal){
+      bankroll+=h.bet*2; returned+=h.bet*2;  // win: get bet back + equal profit
+      resDesc+=`H${i+1}:win($${h.bet}) `;
+    } else if(pTotal===dTotal){
+      bankroll+=h.bet; returned+=h.bet;      // push: get bet back
+      resDesc+=`H${i+1}:push($${h.bet}) `;
+    } else {
+      resDesc+=`H${i+1}:lose($${h.bet}) `;  // lose — bet already gone
+    }
+  }
+
+  // ── CHIP AUDIT ──────────────────────────────────────────────────────
+  const detail=`${hands.length}hands ${chipDetail||'normal'} ${resDesc.trim()}`;
+  auditChips(handsPlayed, brBefore, bankroll, wagered, returned, detail);
+
+  if(bankroll>peakBankroll) peakBankroll=bankroll;
+  if(bankroll<troughBankroll) troughBankroll=bankroll;
+}
+
+// ─── CHART ────────────────────────────────────────────────────────────────
+let myChart;
+function initChart() {
+  const ctx=document.getElementById('chart').getContext('2d');
+  if(myChart) myChart.destroy();
+  myChart=new Chart(ctx,{
+    type:'line',
+    data:{labels:[],datasets:[{
+      label:'Bankroll',data:[],
+      borderColor:'#f0c060',borderWidth:1.5,pointRadius:0,
+      fill:{target:'origin',above:'rgba(240,192,96,0.08)',below:'rgba(244,67,54,0.08)'}
+    }]},
+    options:{
+      animation:false,responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,
+        callbacks:{label:c=>'$'+c.parsed.y.toFixed(0)}}},
+      scales:{
+        x:{ticks:{color:'#557',maxTicksLimit:10},grid:{color:'#1c2a3a'},
+           title:{display:true,text:'Hands Played',color:'#557'}},
+        y:{ticks:{color:'#557',callback:v=>'$'+v.toLocaleString()},
+           grid:{color:'#222e3e'},
+           title:{display:true,text:'Bankroll',color:'#557'}}
+      }
+    }
+  });
+}
+function addChartPoint(hand,br){chartLabels.push(hand);chartVals.push(+br.toFixed(2));}
+function flushChart(){myChart.data.labels=chartLabels;myChart.data.datasets[0].data=chartVals;myChart.update('none');}
+
+// ─── DISPLAY ──────────────────────────────────────────────────────────────
+function fmt(n){return '$'+(Math.abs(n)<1e6?Math.abs(n).toLocaleString('en',{maximumFractionDigits:0}):(n/1e6).toFixed(2)+'M');}
+
+function updateDisplay(){
+  const pl=bankroll-startBankroll;
+  const roi=startBankroll>0?pl/startBankroll*100:0;
+  const decksLeft=shoe.length/52;
+  const tc=runCount/decksLeft;
+
+  const bEl=document.getElementById('sBankroll');
+  bEl.textContent=fmt(bankroll);
+  bEl.className='val '+(bankroll>=startBankroll?'pos':'neg');
+
+  const pEl=document.getElementById('sPL');
+  pEl.textContent=(pl>=0?'+':'')+fmt(pl);
+  pEl.className='val '+(pl>=0?'pos':'neg');
+
+  const rEl=document.getElementById('sROI');
+  rEl.textContent=(roi>=0?'+':'')+roi.toFixed(2)+'%';
+  rEl.className='val '+(roi>=0?'pos':'neg');
+
+  const tcEl=document.getElementById('sTC');
+  tcEl.textContent=tc.toFixed(1);
+  tcEl.className='val '+(tc>1?'pos':tc<-1?'neg':'neu');
+
+  document.getElementById('sHands').textContent=handsPlayed.toLocaleString();
+  const pct=targetHands>0?handsPlayed/targetHands*100:0;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progTxt').textContent=
+    handsPlayed.toLocaleString()+' / '+targetHands.toLocaleString()+' hands';
+}
+
+// ─── GAME LOOP ────────────────────────────────────────────────────────────
+let lastChartHand=0;
+
+function gameLoop(ts){
+  if(!running) return;
+
+  const elapsed=Math.min(ts-lastFrameTime,100);
+  lastFrameTime=ts;
+  const speed=SPEEDS[+document.getElementById('speedSlider').value];
+
+  let toPlay;
+  if(speed===Infinity){
+    toPlay=Math.min(20000, targetHands-handsPlayed);
+  } else {
+    handAcc+=speed*elapsed/1000;
+    toPlay=Math.floor(handAcc);
+    handAcc-=toPlay;
+  }
+  toPlay=Math.max(0,Math.min(toPlay, targetHands-handsPlayed));
+
+  for(let i=0;i<toPlay;i++){
+    playOneHand();
+    if((handsPlayed-lastChartHand)>=sampleEvery){
+      addChartPoint(handsPlayed,bankroll);
+      lastChartHand=handsPlayed;
+    }
+    if(bankroll<=0){stopSim();break;}
+  }
+
+  flushChart();
+  updateDisplay();
+  // Update audit display every ~60 frames worth
+  auditFlushCounter++;
+  if(auditFlushCounter%3===0||speed===Infinity) flushAuditLog();
+
+  if(running&&handsPlayed<targetHands&&bankroll>0){
+    rafId=requestAnimationFrame(gameLoop);
+  } else {
+    stopSim();
+  }
+}
+
+// ─── START / STOP ─────────────────────────────────────────────────────────
+function startSim(){
+  targetHands=+document.getElementById('numHands').value||10000;
+  startBankroll=+document.getElementById('bankroll').value||10000;
+  params.baseBet=+document.getElementById('baseBet').value||10;
+  params.m=[
+    +document.getElementById('m0').value,+document.getElementById('m1').value,
+    +document.getElementById('m2').value,+document.getElementById('m3').value,
+    +document.getElementById('m4').value,+document.getElementById('m5').value
+  ];
+
+  bankroll=startBankroll;
+  handsPlayed=0; handAcc=0;
+  peakBankroll=startBankroll; troughBankroll=startBankroll;
+  chartLabels=[]; chartVals=[]; lastChartHand=0;
+  sampleEvery=Math.max(1,Math.floor(targetHands/2000));
+
+  // Reset audit
+  audit.stratChecks=0; audit.stratDevs=0;
+  audit.chipChecks=0;  audit.chipErrors=0;
+  audit.logEntries=[];
+  auditLog('ok','▶ Simulation started — strategy & chip auditors active');
+  auditFlushCounter=0;
+
+  buildShoe();
+  initChart();
+  addChartPoint(0,bankroll);
+
+  document.getElementById('btnStart').disabled=true;
+  document.getElementById('btnStop').disabled=false;
+  running=true;
+  lastFrameTime=performance.now();
+  rafId=requestAnimationFrame(gameLoop);
+}
+
+function stopSim(){
+  running=false;
+  if(rafId) cancelAnimationFrame(rafId);
+  document.getElementById('btnStart').disabled=false;
+  document.getElementById('btnStop').disabled=true;
+  if(chartVals.length===0||chartLabels[chartLabels.length-1]!==handsPlayed){
+    addChartPoint(handsPlayed,bankroll);
+  }
+  flushChart();
+  updateDisplay();
+
+  const summary=`■ Stopped at ${handsPlayed.toLocaleString()} hands | Strategy: ${audit.stratDevs} devs / ${audit.stratChecks.toLocaleString()} checks | Chips: ${audit.chipErrors} errors / ${audit.chipChecks.toLocaleString()} hands`;
+  auditLog(audit.stratDevs===0&&audit.chipErrors===0?'ok':'warn', summary);
+  flushAuditLog();
+
+  document.getElementById('progTxt').textContent=
+    handsPlayed>=targetHands?'Complete — '+handsPlayed.toLocaleString()+' hands played':
+    'Stopped at '+handsPlayed.toLocaleString()+' hands';
+}
+
+updateSpeedLabel();
+</script>
+</body>
+</html>
