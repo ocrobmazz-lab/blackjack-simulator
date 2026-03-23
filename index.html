@@ -55,7 +55,7 @@ input[type=range]{width:100%;accent-color:#f0c060;cursor:pointer;margin-top:2px}
 </head>
 <body>
 <div class="wrap">
-  <h1>â  BLACKJACK SIMULATOR â </h1>
+  <h1>♠ BLACKJACK SIMULATOR ♠</h1>
   <div class="layout">
 
     <!-- Controls -->
@@ -65,23 +65,23 @@ input[type=range]{width:100%;accent-color:#f0c060;cursor:pointer;margin-top:2px}
       <div class="row"><label>Bankroll ($)</label><input type="number" id="bankroll" value="10000" min="100" step="100"></div>
       <div class="row"><label>Base Bet ($)</label><input type="number" id="baseBet" value="10" min="1" step="1"></div>
       <div class="row">
-        <label>Speed â <span id="speedLbl">100 hands/sec</span></label>
+        <label>Speed — <span id="speedLbl">100 hands/sec</span></label>
         <input type="range" id="speedSlider" min="0" max="10" value="5" oninput="updateSpeedLabel()">
       </div>
 
       <div class="sec">Bet Multiplier by True Count</div>
       <div style="font-size:.72em;color:#557;margin-bottom:8px">Set to 0 to sit out at that count</div>
       <div class="bet-grid">
-        <label>TC â¤ 0 Ã</label><input type="number" id="m0" value="0"  min="0" max="50" step="0.5">
-        <label>TC = 1 Ã</label><input type="number" id="m1" value="1"  min="0" max="50" step="0.5">
-        <label>TC = 2 Ã</label><input type="number" id="m2" value="2"  min="0" max="50" step="0.5">
-        <label>TC = 3 Ã</label><input type="number" id="m3" value="4"  min="0" max="50" step="0.5">
-        <label>TC = 4 Ã</label><input type="number" id="m4" value="6"  min="0" max="50" step="0.5">
-        <label>TC â¥ 5 Ã</label><input type="number" id="m5" value="8"  min="0" max="50" step="0.5">
+        <label>TC ≤ 0 ×</label><input type="number" id="m0" value="0"  min="0" max="50" step="0.5">
+        <label>TC = 1 ×</label><input type="number" id="m1" value="1"  min="0" max="50" step="0.5">
+        <label>TC = 2 ×</label><input type="number" id="m2" value="2"  min="0" max="50" step="0.5">
+        <label>TC = 3 ×</label><input type="number" id="m3" value="4"  min="0" max="50" step="0.5">
+        <label>TC = 4 ×</label><input type="number" id="m4" value="6"  min="0" max="50" step="0.5">
+        <label>TC ≥ 5 ×</label><input type="number" id="m5" value="8"  min="0" max="50" step="0.5">
       </div>
 
-      <button class="btn btn-go"   id="btnStart" onclick="startSim()">â¶ START</button>
-      <button class="btn btn-stop" id="btnStop"  onclick="stopSim()" disabled>â  STOP</button>
+      <button class="btn btn-go"   id="btnStart" onclick="startSim()">▶ START</button>
+      <button class="btn btn-stop" id="btnStop"  onclick="stopSim()" disabled>■ STOP</button>
 
       <div class="prog-wrap"><div class="prog-fill" id="progFill"></div></div>
       <div class="prog-txt" id="progTxt">Ready</div>
@@ -90,10 +90,10 @@ input[type=range]{width:100%;accent-color:#f0c060;cursor:pointer;margin-top:2px}
     <!-- Chart + Audit -->
     <div class="panel">
       <div class="stats">
-        <div class="stat"><div class="lbl">Bankroll</div><div class="val neu" id="sBankroll">â</div></div>
-        <div class="stat"><div class="lbl">Net P/L</div><div class="val neu" id="sPL">â</div></div>
-        <div class="stat"><div class="lbl">ROI</div><div class="val neu" id="sROI">â</div></div>
-        <div class="stat"><div class="lbl">True Count</div><div class="val neu" id="sTC">â</div></div>
+        <div class="stat"><div class="lbl">Bankroll</div><div class="val neu" id="sBankroll">—</div></div>
+        <div class="stat"><div class="lbl">Net P/L</div><div class="val neu" id="sPL">—</div></div>
+        <div class="stat"><div class="lbl">ROI</div><div class="val neu" id="sROI">—</div></div>
+        <div class="stat"><div class="lbl">True Count</div><div class="val neu" id="sTC">—</div></div>
         <div class="stat"><div class="lbl">Hands Played</div><div class="val neu" id="sHands">0</div></div>
       </div>
       <div class="chart-box"><canvas id="chart"></canvas></div>
@@ -132,14 +132,14 @@ input[type=range]{width:100%;accent-color:#f0c060;cursor:pointer;margin-top:2px}
 </div>
 
 <script>
-// âââ SPEED STEPS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── SPEED STEPS ───────────────────────────────────────────────────────────
 const SPEEDS = [1, 2, 5, 10, 25, 50, 100, 500, 1000, 5000, Infinity];
 function updateSpeedLabel() {
   const v = SPEEDS[+document.getElementById('speedSlider').value];
   document.getElementById('speedLbl').textContent = v === Infinity ? 'MAX' : v + ' hands/sec';
 }
 
-// âââ HAND HELPERS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── HAND HELPERS ─────────────────────────────────────────────────────────
 function handVal(cards) {
   let s=0, aces=0;
   for(const c of cards){ if(c===1){aces++;s+=11;}else s+=c; }
@@ -154,14 +154,14 @@ function isSoft(cards) {
 }
 function isBlackjack(cards) { return cards.length===2 && handVal(cards)===21; }
 
-// dealer upcard â index 0-9 (2,3,4,5,6,7,8,9,10,A)
+// dealer upcard → index 0-9 (2,3,4,5,6,7,8,9,10,A)
 function dealerIdx(c) { return c===1?9:c>=10?8:c-2; }
 
 // card(s) display for audit log
 function cardStr(c) { return c===1?'A':c===10?'T':String(c); }
 function handStr(h) { return '['+h.map(cardStr).join('')+']'; }
 
-// âââ BASIC STRATEGY (PRIMARY IMPLEMENTATION) ââââââââââââââââââââââââââââââ
+// ─── BASIC STRATEGY (PRIMARY IMPLEMENTATION) ──────────────────────────────
 // String tables keyed by total/card. Index = dealerIdx (0=2..9=A)
 // H=hit, S=stand, D=double(else hit), Ds=double(else stand), P=split
 const HARD_TBL = {
@@ -218,14 +218,14 @@ function getAction(cards, dealerCard, canDouble, canSplit, splitAce) {
   return a;
 }
 
-// âââ REFERENCE STRATEGY (INDEPENDENT IMPLEMENTATION FOR AUDITING) âââââââââ
-// Uses explicit conditional logic â no shared tables with getAction()
+// ─── REFERENCE STRATEGY (INDEPENDENT IMPLEMENTATION FOR AUDITING) ─────────
+// Uses explicit conditional logic — no shared tables with getAction()
 // Returns the "Ds" distinction for comparison purposes
 function refAction(cards, dealerCard, canDouble, canSplit, splitAce) {
   if(splitAce) return 'S';
   const di=dealerIdx(dealerCard), total=handVal(cards), soft=isSoft(cards);
 
-  // ââ PAIRS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── PAIRS ─────────────────────────────────────────────────────────────
   if(canSplit && cards.length===2 && cards[0]===cards[1]) {
     const pv = cards[0]===1 ? 1 : Math.min(cards[0],10);
     if(pv===1||pv===8) return 'P';              // always split AA, 88
@@ -243,7 +243,7 @@ function refAction(cards, dealerCard, canDouble, canSplit, splitAce) {
     if(pv===2) return di<=5 ? 'P' : 'H';       // split vs 2-7
   }
 
-  // ââ SOFT HANDS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── SOFT HANDS ────────────────────────────────────────────────────────
   if(soft) {
     const other=total-11;
     if(other>=10||total>=21) return 'S';
@@ -260,7 +260,7 @@ function refAction(cards, dealerCard, canDouble, canSplit, splitAce) {
     return 'H';
   }
 
-  // ââ HARD HANDS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── HARD HANDS ────────────────────────────────────────────────────────
   if(total>=17) return 'S';
   if(total>=13) return di<=4?'S':'H';           // 13-16: S vs 2-6
   if(total===12) return (di>=2&&di<=4)?'S':'H'; // 12: S vs 4-6
@@ -270,7 +270,7 @@ function refAction(cards, dealerCard, canDouble, canSplit, splitAce) {
   return 'H';
 }
 
-// âââ AUDIT STATE ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── AUDIT STATE ──────────────────────────────────────────────────────────
 const audit = {
   stratChecks:0, stratDevs:0,
   chipChecks:0,  chipErrors:0,
@@ -306,12 +306,12 @@ function clearAuditLog() {
 function auditStrategyDecision(handNum, playerCards, dealerCard, canDouble, canSplit, splitAce, actualAct) {
   const expected=refAction(playerCards, dealerCard, canDouble, canSplit, splitAce);
   audit.stratChecks++;
-  // Normalize: both implementations may return 'D' or 'Ds' â normalise to D
+  // Normalize: both implementations may return 'D' or 'Ds' — normalise to D
   const actN = actualAct==='Ds'?'D':actualAct;
   const expN = expected==='Ds'?'D':expected;
   if(actN!==expN) {
     audit.stratDevs++;
-    const msg=`H#${handNum} STRATEGY DEV: player${handStr(playerCards)}=${handVal(playerCards)}${isSoft(playerCards)?'s':''} vs dealer ${cardStr(dealerCard)} â got ${actN}, expected ${expN}`;
+    const msg=`H#${handNum} STRATEGY DEV: player${handStr(playerCards)}=${handVal(playerCards)}${isSoft(playerCards)?'s':''} vs dealer ${cardStr(dealerCard)} — got ${actN}, expected ${expN}`;
     auditLog('err', msg);
     console.warn('[AUDIT STRATEGY]', msg);
   }
@@ -330,7 +330,7 @@ function auditChips(handNum, brBefore, brAfter, totalWagered, totalReturned, det
   }
 }
 
-// âââ SHOE âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── SHOE ─────────────────────────────────────────────────────────────────
 const NUM_DECKS=6;
 let shoe=[], runCount=0;
 
@@ -355,7 +355,7 @@ function deal(){
   return c;
 }
 
-// âââ SIMULATION STATE ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── SIMULATION STATE ──────────────────────────────────────────────────────
 let bankroll, startBankroll, handsPlayed, targetHands, running, rafId;
 let lastFrameTime=0, handAcc=0;
 let chartLabels=[], chartVals=[], sampleEvery=1;
@@ -373,7 +373,7 @@ function getBetMult(tc) {
   return params.m[5];
 }
 
-// âââ CORE HAND PLAY âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── CORE HAND PLAY ───────────────────────────────────────────────────────
 function playOneHand() {
   if(shoe.length < NUM_DECKS*52*0.25) buildShoe();
 
@@ -386,7 +386,7 @@ function playOneHand() {
   if(bankroll<=0) return;
 
   if(bet<=0) {
-    // Sit out â but the table still plays, so deal cards to keep the count moving
+    // Sit out — but the table still plays, so deal cards to keep the count moving
     const p=[deal(),deal()], d=[deal(),deal()];
     while(handVal(d)<17) d.push(deal());
     return;
@@ -394,7 +394,7 @@ function playOneHand() {
 
   const actualBet=Math.min(bet, bankroll);
 
-  // ââ CHIP AUDIT: track money in/out ââââââââââââââââââââââââââââââââââ
+  // ── CHIP AUDIT: track money in/out ──────────────────────────────────
   const brBefore=bankroll;
   let wagered=0, returned=0;
   let chipDetail='';
@@ -423,7 +423,7 @@ function playOneHand() {
     return;  // bet already gone
   }
 
-  // ââ PLAY PLAYER HANDS âââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── PLAY PLAYER HANDS ───────────────────────────────────────────────
   const hands=[{cards:player, bet:actualBet, done:false, splitAce:false}];
   let hi=0;
   while(hi<hands.length){
@@ -438,7 +438,7 @@ function playOneHand() {
 
       const act=getAction(h.cards, dealer[0], canDbl, canSpl, h.splitAce);
 
-      // ââ STRATEGY AUDIT âââââââââââââââââââââââââââââââââââââââââ
+      // ── STRATEGY AUDIT ─────────────────────────────────────────
       auditStrategyDecision(handsPlayed, h.cards.slice(), dealer[0], canDbl, canSpl, h.splitAce, act);
 
       if(act==='H'){
@@ -465,18 +465,18 @@ function playOneHand() {
     hi++;
   }
 
-  // ââ DEALER PLAYS ââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── DEALER PLAYS ────────────────────────────────────────────────────
   while(handVal(dealer)<17) dealer.push(deal());
   const dTotal=handVal(dealer), dBust=dTotal>21;
 
-  // ââ RESOLUTION ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── RESOLUTION ──────────────────────────────────────────────────────
   let resDesc='';
   for(let i=0;i<hands.length;i++){
     const h=hands[i];
     const pTotal=handVal(h.cards);
     if(pTotal>21){
       resDesc+=`H${i+1}:bust($${h.bet}) `;
-      // bust â bet already gone, nothing returned
+      // bust — bet already gone, nothing returned
     } else if(dBust||pTotal>dTotal){
       bankroll+=h.bet*2; returned+=h.bet*2;  // win: get bet back + equal profit
       resDesc+=`H${i+1}:win($${h.bet}) `;
@@ -484,11 +484,11 @@ function playOneHand() {
       bankroll+=h.bet; returned+=h.bet;      // push: get bet back
       resDesc+=`H${i+1}:push($${h.bet}) `;
     } else {
-      resDesc+=`H${i+1}:lose($${h.bet}) `;  // lose â bet already gone
+      resDesc+=`H${i+1}:lose($${h.bet}) `;  // lose — bet already gone
     }
   }
 
-  // ââ CHIP AUDIT ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── CHIP AUDIT ──────────────────────────────────────────────────────
   const detail=`${hands.length}hands ${chipDetail||'normal'} ${resDesc.trim()}`;
   auditChips(handsPlayed, brBefore, bankroll, wagered, returned, detail);
 
@@ -496,7 +496,7 @@ function playOneHand() {
   if(bankroll<troughBankroll) troughBankroll=bankroll;
 }
 
-// âââ CHART ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── CHART ────────────────────────────────────────────────────────────────
 let myChart;
 function initChart() {
   const ctx=document.getElementById('chart').getContext('2d');
@@ -525,7 +525,7 @@ function initChart() {
 function addChartPoint(hand,br){chartLabels.push(hand);chartVals.push(+br.toFixed(2));}
 function flushChart(){myChart.data.labels=chartLabels;myChart.data.datasets[0].data=chartVals;myChart.update('none');}
 
-// âââ DISPLAY ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── DISPLAY ──────────────────────────────────────────────────────────────
 function fmt(n){return '$'+(Math.abs(n)<1e6?Math.abs(n).toLocaleString('en',{maximumFractionDigits:0}):(n/1e6).toFixed(2)+'M');}
 
 function updateDisplay(){
@@ -557,7 +557,7 @@ function updateDisplay(){
     handsPlayed.toLocaleString()+' / '+targetHands.toLocaleString()+' hands';
 }
 
-// âââ GAME LOOP ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── GAME LOOP ────────────────────────────────────────────────────────────
 let lastChartHand=0;
 
 function gameLoop(ts){
@@ -600,7 +600,7 @@ function gameLoop(ts){
   }
 }
 
-// âââ START / STOP âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── START / STOP ─────────────────────────────────────────────────────────
 function startSim(){
   targetHands=+document.getElementById('numHands').value||10000;
   startBankroll=+document.getElementById('bankroll').value||10000;
@@ -621,7 +621,7 @@ function startSim(){
   audit.stratChecks=0; audit.stratDevs=0;
   audit.chipChecks=0;  audit.chipErrors=0;
   audit.logEntries=[];
-  auditLog('ok','â¶ Simulation started â strategy & chip auditors active');
+  auditLog('ok','▶ Simulation started — strategy & chip auditors active');
   auditFlushCounter=0;
 
   buildShoe();
@@ -646,12 +646,12 @@ function stopSim(){
   flushChart();
   updateDisplay();
 
-  const summary=`â  Stopped at ${handsPlayed.toLocaleString()} hands | Strategy: ${audit.stratDevs} devs / ${audit.stratChecks.toLocaleString()} checks | Chips: ${audit.chipErrors} errors / ${audit.chipChecks.toLocaleString()} hands`;
+  const summary=`■ Stopped at ${handsPlayed.toLocaleString()} hands | Strategy: ${audit.stratDevs} devs / ${audit.stratChecks.toLocaleString()} checks | Chips: ${audit.chipErrors} errors / ${audit.chipChecks.toLocaleString()} hands`;
   auditLog(audit.stratDevs===0&&audit.chipErrors===0?'ok':'warn', summary);
   flushAuditLog();
 
   document.getElementById('progTxt').textContent=
-    handsPlayed>=targetHands?'Complete â '+handsPlayed.toLocaleString()+' hands played':
+    handsPlayed>=targetHands?'Complete — '+handsPlayed.toLocaleString()+' hands played':
     'Stopped at '+handsPlayed.toLocaleString()+' hands';
 }
 
