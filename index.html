@@ -36,7 +36,7 @@ input[type=range]{width:100%;accent-color:#f0c060;cursor:pointer;margin-top:2px}
 .stat .lbl{font-size:.68em;color:#557;text-transform:uppercase;letter-spacing:.8px}
 .stat .val{font-size:1.25em;font-weight:700;margin-top:3px}
 .pos{color:#4caf50}.neg{color:#f44336}.neu{color:#f0c060}
-.chart-box{position:relative;height:360px}
+.chart-box{position:relative;height:260px} .chart-box+.chart-box{margin-top:12px}
 /* Audit panel */
 .audit-panel{margin-top:14px;background:#111a24;border-radius:8px;padding:12px}
 .audit-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
@@ -97,6 +97,7 @@ input[type=range]{width:100%;accent-color:#f0c060;cursor:pointer;margin-top:2px}
         <div class="stat"><div class="lbl">Hands Played</div><div class="val neu" id="sHands">0</div></div>
       </div>
       <div class="chart-box"><canvas id="chart"></canvas></div>
+      <div class="chart-box"><canvas id="tcChart"></canvas></div>
 
       <!-- AUDIT PANEL -->
       <div class="audit-panel">
@@ -358,7 +359,7 @@ function deal(){
 // ─── SIMULATION STATE ──────────────────────────────────────────────────────
 let bankroll, startBankroll, handsPlayed, targetHands, running, rafId;
 let lastFrameTime=0, handAcc=0;
-let chartLabels=[], chartVals=[], sampleEvery=1;
+let chartLabels=[], chartVals=[], tcVals=[], sampleEvery=1;
 let params={};
 let peakBankroll, troughBankroll;
 let auditFlushCounter=0;
@@ -497,7 +498,7 @@ function playOneHand() {
 }
 
 // ─── CHART ────────────────────────────────────────────────────────────────
-let myChart;
+let myChart, myTCChart;
 function initChart() {
   const ctx=document.getElementById('chart').getContext('2d');
   if(myChart) myChart.destroy();
@@ -522,8 +523,30 @@ function initChart() {
     }
   });
 }
-function addChartPoint(hand,br){chartLabels.push(hand);chartVals.push(+br.toFixed(2));}
-function flushChart(){myChart.data.labels=chartLabels;myChart.data.datasets[0].data=chartVals;myChart.update('none');}
+  const ctx2=document.getElementById('tcChart').getContext('2d');
+  if(myTCChart) myTCChart.destroy();
+  myTCChart=new Chart(ctx2,{
+    type:'line',
+    data:{labels:[],datasets:[{
+      label:'True Count',data:[],
+      borderColor:'#64b5f6',borderWidth:1.5,pointRadius:0,
+      fill:{target:{value:0},above:'rgba(76,175,80,0.08)',below:'rgba(244,67,54,0.08)'}
+    }]},
+    options:{
+      animation:false,responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,
+        callbacks:{label:c=>c.parsed.y.toFixed(2)}}},
+      scales:{
+        x:{ticks:{color:'#557',maxTicksLimit:10},grid:{color:'#1c2a3a'},
+          title:{display:true,text:'Hands Played',color:'#557'}},
+        y:{ticks:{color:'#557'},grid:{color:'#222e3e'},
+          title:{display:true,text:'True Count',color:'#557'}}
+      }
+    }
+  });
+}
+function addChartPoint(hand,br){chartLabels.push(hand);chartVals.push(+br.toFixed(2));const dl=shoe.length/52;tcVals.push(+(runCount/dl).toFixed(2));}
+function flushChart(){myChart.data.labels=chartLabels;myChart.data.datasets[0].data=chartVals;myChart.update('none');myTCChart.data.labels=chartLabels;myTCChart.data.datasets[0].data=tcVals;myTCChart.update('none');}
 
 // ─── DISPLAY ──────────────────────────────────────────────────────────────
 function fmt(n){return '$'+(Math.abs(n)<1e6?Math.abs(n).toLocaleString('en',{maximumFractionDigits:0}):(n/1e6).toFixed(2)+'M');}
@@ -614,7 +637,7 @@ function startSim(){
   bankroll=startBankroll;
   handsPlayed=0; handAcc=0;
   peakBankroll=startBankroll; troughBankroll=startBankroll;
-  chartLabels=[]; chartVals=[]; lastChartHand=0;
+  chartLabels=[]; chartVals=[]; tcVals=[]; lastChartHand=0;
   sampleEvery=Math.max(1,Math.floor(targetHands/2000));
 
   // Reset audit
