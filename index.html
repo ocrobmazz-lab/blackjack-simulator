@@ -8,7 +8,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#111a24;color:#ddd;font-family:'Segoe UI',sans-serif;min-height:100vh}
 .wrap{max-width:1500px;margin:0 auto;padding:16px}
-h1{text-align:center;color:#f0c060;font-size:1.7em;letter-spacing:3px;mahrgin-bottom:16px}
+h1{text-align:center;color:#f0c060;font-size:1.7em;letter-spacing:3px;margin-bottom:16px}
 .layout{display:grid;grid-template-columns:300px 1fr;gap:16px}
 .panel{background:#1c2a3a;border-radius:10px;padding:16px}
 .sec{color:#f0c060;font-size:.78em;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid #2a3f55;padding-bottom:6px;margin:14px 0 10px}
@@ -337,10 +337,10 @@ let shoe=[], runCount=0;
 
 function buildShoe() {
   shoe=[];
-  for(let d=0;d<NUM_DECKS;d++)h
+  for(let d=0;d<NUM_DECKS;d++)
     for(let s=0;s<4;s++)
       for(let r=0;r<13;r++)
-        shoe.push(Math.min(r+1,10));  // A=1, 2-9, 10/J/Q/K=10h
+        shoe.push(Math.min(r+1,10));  // A=1, 2-9, 10/J/Q/K=10
   for(let i=shoe.length-1;i>0;i--){
     const j=Math.floor(Math.random()*(i+1));
     [shoe[i],shoe[j]]=[shoe[j],shoe[i]];
